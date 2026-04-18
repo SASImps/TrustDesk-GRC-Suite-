@@ -1,2 +1,3 @@
 # TrustDesk-GRC-Suite-
 Enterprise GRC &amp; Support Dashboard featuring quantitative risk scoring (I×L), multi-framework mapping (ISO 27001/NIST/GDPR), and automated audit workflows.
+I developed TrustDesk v3.0, a Governance, Risk, and Compliance (GRC) application designed to automate the intake and prioritization of regulatory issues. The system features a quantitative risk matrix that calculates severity based on Impact and Likelihood, ensuring that high-risk items are addressed within strict SLA timeframes. I also implemented an 'Audit Mode' to simulate external verification processes, ensuring all closed tickets maintain a high standard of evidentiary integrity. This project demonstrates my ability to build secure, scalable tools for distributed international teams.
