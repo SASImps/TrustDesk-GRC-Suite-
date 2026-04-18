@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustDesk v3.0 – Enterprise GRC & Support</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a; --panel: #111827; --panel2: #1a2235; --border: #1e2d45;
+    --accent: #00c896; --accent-blue: #3b82f6; --text: #e2e8f0;
+    --muted: #64748b; --danger: #ef4444; --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body { 
+    margin: 0; background: var(--bg); color: var(--text); 
+    font-family: 'DM Sans', sans-serif; display: flex; height: 100vh; overflow: hidden;
+  }
+
+  /* Sidebar */
+  aside { 
+    width: 260px; background: var(--panel); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; color: var(--accent); margin-bottom: 40px; }
+  .nav-item { 
+    padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; color: var(--muted);
+    transition: 0.2s; font-size: 14px; font-weight: 500;
+  }
+  .nav-item:hover { background: var(--panel2); color: var(--text); }
+  .nav-item.active { background: var(--accent); color: var(--bg); }
+
+  /* Main */
+  main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+  header { padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--panel); }
+  .filter-bar { padding: 15px 40px; display: flex; gap: 15px; align-items: center; background: var(--bg); border-bottom: 1px solid var(--border); }
+  input, select, textarea { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; width: 100%; }
+
+  /* Table Components */
+  .view-section { display: none; padding: 0 40px 40px; }
+  .view-section.active { display: block; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 16px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+  /* GRC Elements */
+  .risk-badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-family: 'DM Mono'; font-size: 10px; }
+  .risk-high { background: #991b1b; color: #f87171; }
+  .risk-med { background: #92400e; color: #fbbf24; }
+  .risk-low { background: #065f46; color: #34d399; }
+  .sla-tag { font-size: 10px; color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 1px 5px; border-radius: 4px; }
+
+  /* Audit Mode */
+  .audit-active .btn-action { display: none !important; }
+  .missing-evidence { border: 1px dashed var(--danger) !important; background: rgba(239, 68, 68, 0.05) !important; position: relative; }
+  .missing-evidence::after { content: '⚠️ NO EVIDENCE'; position: absolute; right: 10px; top: 40%; font-size: 9px; color: var(--danger); font-weight: 800; }
+
+  /* Modal */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100; }
+  .modal-content { background: var(--panel); border: 1px solid var(--border); padding: 30px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+  .btn-primary { background: var(--accent); color: var(--bg); border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%; }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="logo">TrustDesk.</div>
+  <div class="nav-item active" onclick="switchView('dashboard', this)">Dashboard</div>
+  <div class="nav-item" onclick="switchView('risk', this)">Risk Registry</div>
+  <div class="nav-item" onclick="switchView('audit', this)">Audit Logs</div>
+  <div style="margin-top: auto; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 15px;">
+    <strong>Sashakay Simpson</strong><br>Jamaica | Remote Ready
+  </div>
+</aside>
+
+<main>
+  <header>
+    <h2 id="view-title" style="font-family: 'Syne'; margin:0;">Dashboard</h2>
+    <button class="btn-primary btn-action" onclick="openModal()" style="width: auto; padding: 10px 20px;">+ New Support/GRC Ticket</button>
+  </header>
+
+  <div class="filter-bar">
+    <input type="text" id="global-search" placeholder="Search data..." oninput="refreshAllViews()" style="max-width: 300px;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+      <span style="font-size: 11px; color: var(--muted); font-family: 'DM Mono';">AUDIT MODE</span>
+      <input type="checkbox" id="audit-toggle" onchange="toggleAuditMode()" style="width: 20px;">
+    </div>
+  </div>
+
+  <section id="view-dashboard" class="view-section active">
+    <table>
+      <thead>
+        <tr><th>Client ID</th><th>Complaint & Type</th><th>SLA Deadline</th><th>Risk Score</th><th>Status</th></tr>
+      </thead>
+      <tbody id="dashboard-tbody"></tbody>
+    </table>
+  </section>
+
+  <section id="view-risk" class="view-section">
+    <div style="background: var(--panel2); padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid var(--border);">
+      <h4 style="margin:0 0 10px 0">Quantitative Risk Matrix</h4>
+      <p style="font-size: 12px; color: var(--muted);">Aggregated risk landscape based on active tickets.</p>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Risk ID</th><th>Asset/Issue</th><th>Impact</th><th>Likelihood</th><th>Score</th><th>Mitigation Status</th></tr>
+      </thead>
+      <tbody id="risk-tbody"></tbody>
+    </table>
+  </section>
+
+  <section id="view-audit" class="view-section">
+    <table>
+      <thead>
+        <tr><th>Timestamp</th><th>Action</th><th>User</th><th>Ticket Reference</th><th>Hash Integrity</th></tr>
+      </thead>
+      <tbody id="audit-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div class="modal" id="new-modal">
+  <div class="modal-content">
+    <h3 style="margin-top:0; color: var(--accent);">Initialize GRC Support Ticket</h3>
+    <div class="form-grid">
+      <div><label style="font-size: 10px; color: var(--muted);">CUSTOMER SUPPORT #</label><input type="text" id="f-cust-id" placeholder="e.g. CS-900"></div>
+      <div><label style="font-size: 10px; color: var(--muted);">ISSUE TYPE</label><select id="f-type"><option>Data Privacy</option><option>Access Control</option><option>Technical Error</option></select></div>
+    </div>
+    <div class="form-row" style="margin-bottom: 15px;"><label style="font-size: 10px; color: var(--muted);">COMPLAINT DETAILS</label><textarea id="f-complaint" rows="3"></textarea></div>
+    <div class="form-grid">
+      <div><label style="font-size: 10px; color: var(--muted);">IMPACT (1-5)</label><select id="f-impact"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></div>
+      <div><label style="font-size: 10px; color: var(--muted);">LIKELIHOOD (1-5)</label><select id="f-likelihood"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option></select></div>
+    </div>
+    <div class="form-grid">
+      <div><label style="font-size: 10px; color: var(--muted);">SLA WINDOW</label><select id="f-sla"><option>24h</option><option selected>48h</option><option>72h</option></select></div>
+      <div><label style="font-size: 10px; color: var(--muted);">LOCATION</label><select id="f-location"><option>Kingston HQ</option><option>Montego Bay</option></select></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-primary" onclick="submitTicket()">Sync Data</button>
+      <button onclick="closeModal()" style="background:transparent; border:1px solid var(--border); color:white; padding:12px; border-radius:6px; cursor:pointer; width: 100%;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let tickets = [];
+  let nextId = 7000;
+
+  function init() {
+    const saved = localStorage.getItem('trustdesk_vFinal');
+    if (saved) {
+      const data = JSON.parse(saved);
+      tickets = data.tickets;
+      nextId = data.nextId;
+    } else {
+      addTicket({ custId: "CS-101", type: "Data Privacy", complaint: "User requested data portability report.", impact: 3, likelihood: 1, sla: "48h", location: "Kingston HQ" });
+    }
+    refreshAllViews();
+  }
+
+  function save() { localStorage.setItem('trustdesk_vFinal', JSON.stringify({ tickets, nextId })); }
+
+  function safe(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function getRiskLevel(score) {
+    if (score >= 15) return { label: 'CRITICAL', class: 'risk-high' };
+    if (score >= 8) return { label: 'MEDIUM', class: 'risk-med' };
+    return { label: 'LOW', class: 'risk-low' };
+  }
+
+  function switchView(viewId, el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    document.getElementById('view-title').innerText = el.innerText;
+  }
+
+  function refreshAllViews() {
+    const search = document.getElementById('global-search').value.toLowerCase();
+    const filtered = tickets.filter(t => t.complaint.toLowerCase().includes(search) || t.custId.toLowerCase().includes(search));
+    
+    // Render Dashboard
+    document.getElementById('dashboard-tbody').innerHTML = filtered.map(t => {
+      const score = t.impact * t.likelihood;
+      const risk = getRiskLevel(score);
+      return `
+        <tr class="${(t.status === 'Closed' && document.getElementById('audit-toggle').checked) ? 'missing-evidence' : ''}">
+          <td><div style="font-weight:bold; color:var(--accent-blue)">${safe(t.custId)}</div></td>
+          <td><div style="font-weight:500;">${safe(t.type)}</div><div style="font-size:11px; color:var(--muted)">${safe(t.complaint)}</div></td>
+          <td><span class="sla-tag">${safe(t.sla)}</span></td>
+          <td><span class="risk-badge ${risk.class}">${risk.label} (${score})</span></td>
+          <td><span style="font-size:11px; border:1px solid var(--border); padding:2px 6px; border-radius:4px;">${safe(t.status)}</span></td>
+        </tr>`;
+    }).join('');
+
+    // Render Risk Registry
+    document.getElementById('risk-tbody').innerHTML = filtered.map(t => {
+      const score = t.impact * t.likelihood;
+      return `<tr><td>RK-${t.id.split('-')[1]}</td><td>${safe(t.type)}</td><td>${t.impact}</td><td>${t.likelihood}</td><td>${score}</td><td>Pending Audit</td></tr>`;
+    }).join('');
+
+    // Render Audit Logs
+    document.getElementById('audit-tbody').innerHTML = filtered.map(t => `
+      <tr>
+        <td style="font-family: 'DM Mono'; font-size: 11px;">${new Date().toLocaleDateString()}</td>
+        <td>Ticket Creation</td>
+        <td>S. Simpson</td>
+        <td>${safe(t.custId)}</td>
+        <td style="color:var(--accent); font-size:10px;">SHA256: VALID</td>
+      </tr>`).join('');
+  }
+
+  function addTicket(data) {
+    tickets.unshift({ id: 'TKT-' + nextId++, ...data, status: "Open", timestamp: new Date() });
+    save();
+  }
+
+  function submitTicket() {
+    const custId = document.getElementById('f-cust-id').value;
+    const complaint = document.getElementById('f-complaint').value;
+    if (!custId || !complaint) return alert("Fill all fields");
+    addTicket({
+      custId, complaint, type: document.getElementById('f-type').value,
+      impact: parseInt(document.getElementById('f-impact').value),
+      likelihood: parseInt(document.getElementById('f-likelihood').value),
+      sla: document.getElementById('f-sla').value,
+      location: document.getElementById('f-location').value
+    });
+    closeModal();
+    refreshAllViews();
+  }
+
+  function toggleAuditMode() { refreshAllViews(); }
+  function openModal() { document.getElementById('new-modal').style.display = 'flex'; }
+  function closeModal() { document.getElementById('new-modal').style.display = 'none'; }
+
+  window.onload = init;
+</script>
+</body>
+</html>
