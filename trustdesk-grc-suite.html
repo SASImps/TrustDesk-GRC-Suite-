@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustDesk – GRC Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a; --panel: #111827; --panel2: #1a2235; --border: #1e2d45;
+    --accent: #00c896; --accent2: #3b82f6; --accent3: #f59e0b;
+    --danger: #ef4444; --text: #e2e8f0; --muted: #64748b;
+    --tag-grc: #0f3d2e; --tag-grc-text: #00c896;
+    --tag-it: #0c2a4a; --tag-it-text: #60a5fa;
+    --tag-vendor: #3d2a00; --tag-vendor-text: #fbbf24;
+    --tag-vuln: #2d1a4a; --tag-vuln-text: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow: hidden; }
+
+  .sidebar { width: 220px; min-height: 100vh; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .nav { padding: 16px 12px; flex: 1; }
+  .nav-label { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; padding: 0 8px; margin-bottom: 8px; margin-top: 12px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--muted); font-weight: 500; transition: all 0.15s; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--panel2); color: var(--text); }
+  .nav-item.active { background: rgba(0,200,150,0.1); color: var(--accent); }
+  .nav-item.active-vuln { background: rgba(192,132,252,0.1); color: #c084fc; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--accent); color: #000; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 7px; font-family: 'DM Mono', monospace; }
+  .nav-badge.blue { background: var(--accent2); color: #fff; }
+  .nav-badge.amber { background: var(--accent3); color: #000; }
+  .nav-badge.purple { background: #c084fc; color: #000; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .user-chip { display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #000; }
+  .user-name { font-weight: 500; color: var(--text); font-size: 13px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; gap: 16px; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; flex: 1; }
+  .btn { padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 13.5px; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #00b085; }
+  .btn-purple { background: #c084fc; color: #000; }
+  .btn-purple:hover { background: #a855f7; }
+  .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--panel2); color: var(--text); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .search-bar { display: flex; align-items: center; gap: 8px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; width: 260px; }
+  .search-bar input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; width: 100%; }
+  .search-bar input::placeholder { color: var(--muted); }
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+  /* PAGE TABS */
+  .page-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+  .page-tab { padding: 8px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.15s; font-family: 'DM Mono', monospace; }
+  .page-tab:hover { color: var(--text); }
+  .page-tab.active { background: var(--panel2); color: var(--accent); }
+  .page-tab.active-vuln { background: var(--panel2); color: #c084fc; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before { background: var(--accent2); }
+  .stat-card.amber::before { background: var(--accent3); }
+  .stat-card.red::before { background: var(--danger); }
+  .stat-card.purple::before { background: #c084fc; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-delta { font-size: 11px; margin-top: 8px; font-family: 'DM Mono', monospace; }
+  .stat-delta.up { color: var(--accent); }
+  .stat-delta.down { color: var(--danger); }
+  .stat-delta.purple { color: #c084fc; }
+
+  /* FILTER */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); transition: all 0.15s; font-family: 'DM Mono', monospace; }
+  .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .filter-chip.active-purple { background: #c084fc; color: #000; border-color: #c084fc; }
+  select.filter-select { background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 12.5px; font-family: 'DM Mono', monospace; outline: none; cursor: pointer; }
+
+  /* TABLE */
+  .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--panel2); }
+  th { padding: 12px 16px; text-align: left; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr { transition: background 0.1s; cursor: pointer; }
+
+  .ticket-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .ticket-title { font-weight: 500; color: var(--text); }
+  .ticket-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .tag-grc { background: var(--tag-grc); color: var(--tag-grc-text); }
+  .tag-it { background: var(--tag-it); color: var(--tag-it-text); }
+  .tag-vendor { background: var(--tag-vendor); color: var(--tag-vendor-text); }
+  .tag-vuln { background: var(--tag-vuln); color: var(--tag-vuln-text); }
+
+  .priority { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .priority-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .p-critical .priority-dot { background: #ef4444; } .p-critical { color: #ef4444; }
+  .p-high .priority-dot { background: #f97316; } .p-high { color: #f97316; }
+  .p-medium .priority-dot { background: #f59e0b; } .p-medium { color: #f59e0b; }
+  .p-low .priority-dot { background: #22c55e; } .p-low { color: #22c55e; }
+
+  .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .s-open { background: rgba(239,68,68,0.15); color: #f87171; }
+  .s-progress { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .s-review { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .s-closed { background: rgba(34,197,94,0.15); color: #86efac; }
+  .s-patched { background: rgba(34,197,94,0.15); color: #86efac; }
+  .s-accepted { background: rgba(100,116,139,0.15); color: #94a3b8; }
+
+  /* CVSS SCORE BADGE */
+  .cvss-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; font-family: 'DM Mono', monospace; min-width: 46px; text-align: center; }
+  .cvss-critical { background: rgba(192,0,0,0.2); color: #ff6b6b; border: 1px solid rgba(192,0,0,0.3); }
+  .cvss-high { background: rgba(255,106,0,0.2); color: #ff9f4a; border: 1px solid rgba(255,106,0,0.3); }
+  .cvss-medium { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .cvss-low { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 580px; max-height: 90vh; overflow-y: auto; padding: 28px; animation: slideUp 0.2s ease; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; }
+  .modal-close:hover { color: var(--text); }
+  .form-row { margin-bottom: 18px; }
+  .form-label { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 7px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13.5px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #c084fc; }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* DETAIL PANEL */
+  .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; justify-content: flex-end; }
+  .detail-overlay.open { display: flex; }
+  .detail-panel { background: var(--panel); border-left: 1px solid var(--border); width: 480px; height: 100%; overflow-y: auto; padding: 28px; animation: slideIn 0.2s ease; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .detail-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .detail-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .detail-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .detail-field-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+  .detail-field-val { font-size: 13.5px; font-weight: 500; }
+  .detail-desc { background: var(--panel2); border-radius: 10px; padding: 16px; margin-bottom: 20px; font-size: 13.5px; color: #cbd5e1; line-height: 1.6; }
+  .activity-log { margin-top: 20px; }
+  .activity-title { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; margin-bottom: 14px; }
+  .activity-item { display: flex; gap: 12px; margin-bottom: 14px; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+  .activity-dot.purple { background: #c084fc; }
+  .activity-text { font-size: 13px; color: var(--muted); }
+  .activity-text strong { color: var(--text); }
+  .activity-time { font-size: 11px; color: #475569; font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .detail-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  /* VULN SPECIFIC */
+  .cve-link { font-family: 'DM Mono', monospace; font-size: 12px; color: #c084fc; text-decoration: none; }
+  .cve-link:hover { text-decoration: underline; }
+  .tool-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'DM Mono', monospace; background: rgba(192,132,252,0.1); color: #c084fc; border: 1px solid rgba(192,132,252,0.2); }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--panel2); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 20px; font-size: 13.5px; color: var(--accent); display: flex; align-items: center; gap: 10px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(.34,1.56,.64,1); font-family: 'DM Mono', monospace; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.purple-toast { border-color: #c084fc; color: #c084fc; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">TrustDesk</div>
+    <div class="logo-sub">GRC SUITE</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">TICKETING</div>
+    <div class="nav-item active" id="nav-tickets" onclick="switchModule('tickets', this)">
+      <span class="icon">🗂</span> All Tickets
+      <span class="nav-badge" id="badge-all">0</span>
+    </div>
+    <div class="nav-item" onclick="setView('open')">
+      <span class="icon">🔴</span> Open
+      <span class="nav-badge" id="badge-open">0</span>
+    </div>
+    <div class="nav-item" onclick="setView('progress')">
+      <span class="icon">🔵</span> In Progress
+      <span class="nav-badge blue" id="badge-progress">0</span>
+    </div>
+    <div class="nav-label">VULNERABILITY MGMT</div>
+    <div class="nav-item" id="nav-vulns" onclick="switchModule('vulns', this)">
+      <span class="icon">🛡</span> CVE Tracker
+      <span class="nav-badge purple" id="badge-vulns">0</span>
+    </div>
+    <div class="nav-item" onclick="setVulnFilter('Critical')">
+      <span class="icon">🔴</span> Critical CVEs
+      <span class="nav-badge" style="background:#ef4444;color:#fff" id="badge-crit">0</span>
+    </div>
+    <div class="nav-item" onclick="setVulnFilter('High')">
+      <span class="icon">🟠</span> High CVEs
+    </div>
+    <div class="nav-label">CATEGORIES</div>
+    <div class="nav-item" onclick="setCategory('GRC')"><span class="icon">⚖️</span> GRC / Compliance</div>
+    <div class="nav-item" onclick="setCategory('IT')"><span class="icon">💻</span> IT Support</div>
+    <div class="nav-item" onclick="setCategory('Vendor')"><span class="icon">📋</span> Vendor / Contract</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">SK</div>
+      <div><div class="user-name">SashaKay Simpson</div><div style="font-size:11px">GRC Analyst</div></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="view-title">All Tickets</div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Search..." id="search-input" oninput="handleSearch()">
+    </div>
+    <button class="btn btn-outline" onclick="exportCSV()">⬇ Export</button>
+    <button class="btn btn-primary" id="new-btn" onclick="openNewTicket()">+ New Ticket</button>
+  </div>
+
+  <div class="content">
+    <!-- PAGE TABS -->
+    <div class="page-tabs">
+      <div class="page-tab active" id="tab-tickets" onclick="switchPage('tickets')">🗂 Tickets</div>
+      <div class="page-tab" id="tab-vulns" onclick="switchPage('vulns')">🛡 Vulnerability Management</div>
+    </div>
+
+    <!-- TICKETS PAGE -->
+    <div class="page active" id="page-tickets">
+      <div class="stats-row">
+        <div class="stat-card green"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Tickets</div><div class="stat-delta up" id="stat-open-count">↑ 0 open</div></div>
+        <div class="stat-card red"><div class="stat-num" id="stat-critical">0</div><div class="stat-label">Critical Priority</div><div class="stat-delta down">Immediate action</div></div>
+        <div class="stat-card blue"><div class="stat-num" id="stat-inprogress">0</div><div class="stat-label">In Progress</div><div class="stat-delta up">Active</div></div>
+        <div class="stat-card amber"><div class="stat-num" id="stat-closed">0</div><div class="stat-label">Closed</div><div class="stat-delta up">Resolved</div></div>
+      </div>
+      <div class="filter-bar">
+        <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">FILTER:</span>
+        <div class="filter-chip active" id="chip-all" onclick="setChip('all')">All</div>
+        <div class="filter-chip" id="chip-GRC" onclick="setChip('GRC')">GRC</div>
+        <div class="filter-chip" id="chip-IT" onclick="setChip('IT')">IT Support</div>
+        <div class="filter-chip" id="chip-Vendor" onclick="setChip('Vendor')">Vendor</div>
+        <select class="filter-select" id="priority-filter" onchange="renderTable()">
+          <option value="">All Priorities</option>
+          <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+        <select class="filter-select" id="status-filter" onchange="renderTable()">
+          <option value="">All Statuses</option>
+          <option>Open</option><option>In Progress</option><option>In Review</option><option>Closed</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>TICKET ID</th><th>TITLE</th><th>CATEGORY</th><th>PRIORITY</th><th>STATUS</th><th>ASSIGNEE</th><th>CREATED</th></tr></thead>
+        <tbody id="ticket-tbody"></tbody></table>
+        <div id="empty-tickets" class="empty-state" style="display:none"><div style="font-size:40px">📭</div><div>No tickets match your filters.</div></div>
+      </div>
+    </div>
+
+    <!-- VULN PAGE -->
+    <div class="page" id="page-vulns">
+      <div class="stats-row">
+        <div class="stat-card purple"><div class="stat-num" id="vstat-total">0</div><div class="stat-label">Total CVEs</div><div class="stat-delta purple">Tracked vulnerabilities</div></div>
+        <div class="stat-card red"><div class="stat-num" id="vstat-critical">0</div><div class="stat-label">Critical (9.0–10.0)</div><div class="stat-delta down">Patch immediately</div></div>
+        <div class="stat-card amber"><div class="stat-num" id="vstat-high">0</div><div class="stat-label">High (7.0–8.9)</div><div class="stat-delta down">Patch within 30 days</div></div>
+        <div class="stat-card green"><div class="stat-num" id="vstat-patched">0</div><div class="stat-label">Patched</div><div class="stat-delta up">Remediated</div></div>
+      </div>
+      <div class="filter-bar">
+        <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">SEVERITY:</span>
+        <div class="filter-chip active-purple" id="vchip-all" onclick="setVulnChip('all')">All</div>
+        <div class="filter-chip" id="vchip-Critical" onclick="setVulnChip('Critical')">Critical</div>
+        <div class="filter-chip" id="vchip-High" onclick="setVulnChip('High')">High</div>
+        <div class="filter-chip" id="vchip-Medium" onclick="setVulnChip('Medium')">Medium</div>
+        <div class="filter-chip" id="vchip-Low" onclick="setVulnChip('Low')">Low</div>
+        <select class="filter-select" id="vstatus-filter" onchange="renderVulnTable()">
+          <option value="">All Statuses</option>
+          <option>Open</option><option>In Progress</option><option>Patched</option><option>Accepted</option>
+        </select>
+        <select class="filter-select" id="vtool-filter" onchange="renderVulnTable()">
+          <option value="">All Tools</option>
+          <option>Tenable</option><option>Qualys</option><option>Rapid7</option><option>Manual</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>CVE ID</th><th>VULNERABILITY</th><th>AFFECTED SYSTEM</th><th>CVSS SCORE</th><th>SEVERITY</th><th>DISCOVERED BY</th><th>STATUS</th><th>REMEDIATION DUE</th></tr></thead>
+        <tbody id="vuln-tbody"></tbody></table>
+        <div id="empty-vulns" class="empty-state" style="display:none"><div style="font-size:40px">🛡</div><div>No vulnerabilities match your filters.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW TICKET MODAL -->
+<div class="modal-overlay" id="new-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Create New Ticket</div><button class="modal-close" onclick="closeModal('new-modal')">✕</button></div>
+    <div class="form-row"><label class="form-label">TITLE *</label><input class="form-input" id="f-title" placeholder="Brief description"></div>
+    <div class="form-row"><label class="form-label">DESCRIPTION</label><textarea class="form-textarea" id="f-desc" placeholder="Details..."></textarea></div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">CATEGORY *</label><select class="form-select" id="f-cat"><option value="GRC">GRC / Compliance</option><option value="IT">IT Support</option><option value="Vendor">Vendor / Contract</option></select></div>
+      <div class="form-row"><label class="form-label">PRIORITY *</label><select class="form-select" id="f-priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></div>
+      <div class="form-row"><label class="form-label">ASSIGNEE</label><select class="form-select" id="f-assignee"><option>SashaKay Simpson</option><option>James Okafor</option><option>Maria Chen</option><option>Derek Williams</option><option>Priya Nair</option></select></div>
+      <div class="form-row"><label class="form-label">FRAMEWORK</label><select class="form-select" id="f-framework"><option value="">None</option><option>NIST CSF 2.0</option><option>ISO 27001</option><option>SOC 2</option><option>GDPR</option></select></div>
+    </div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('new-modal')">Cancel</button><button class="btn btn-primary" onclick="createTicket()">Create Ticket</button></div>
+  </div>
+</div>
+
+<!-- NEW VULN MODAL -->
+<div class="modal-overlay" id="new-vuln-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" style="color:#c084fc">Add CVE / Vulnerability</div><button class="modal-close" onclick="closeModal('new-vuln-modal')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">CVE ID *</label><input class="form-input" id="v-cve" placeholder="CVE-2024-XXXXX"></div>
+      <div class="form-row"><label class="form-label">CVSS SCORE (0-10)</label><input class="form-input" id="v-cvss" type="number" min="0" max="10" step="0.1" placeholder="e.g. 9.8"></div>
+    </div>
+    <div class="form-row"><label class="form-label">VULNERABILITY NAME *</label><input class="form-input" id="v-name" placeholder="e.g. Apache Log4j Remote Code Execution"></div>
+    <div class="form-row"><label class="form-label">AFFECTED SYSTEM</label><input class="form-input" id="v-system" placeholder="e.g. Production Web Server / Windows 10 endpoints"></div>
+    <div class="form-row"><label class="form-label">DESCRIPTION</label><textarea class="form-textarea" id="v-desc" placeholder="What is this vulnerability and what's the impact?"></textarea></div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">DISCOVERED BY</label><select class="form-select" id="v-tool"><option>Tenable</option><option>Qualys</option><option>Rapid7</option><option>Manual</option></select></div>
+      <div class="form-row"><label class="form-label">ASSIGNEE</label><select class="form-select" id="v-assignee"><option>SashaKay Simpson</option><option>Derek Williams</option><option>James Okafor</option><option>Priya Nair</option></select></div>
+      <div class="form-row"><label class="form-label">REMEDIATION</label><input class="form-input" id="v-remediation" placeholder="e.g. Apply patch KB5034441"></div>
+      <div class="form-row"><label class="form-label">DUE DATE</label><input class="form-input" id="v-due" type="date"></div>
+    </div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('new-vuln-modal')">Cancel</button><button class="btn btn-purple" onclick="createVuln()">Add Vulnerability</button></div>
+  </div>
+</div>
+
+<!-- TICKET DETAIL -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel">
+    <div class="detail-id" id="d-id"></div>
+    <div class="detail-title" id="d-title"></div>
+    <div class="detail-meta">
+      <div><div class="detail-field-label">CATEGORY</div><div class="detail-field-val" id="d-cat"></div></div>
+      <div><div class="detail-field-label">PRIORITY</div><div class="detail-field-val" id="d-priority"></div></div>
+      <div><div class="detail-field-label">STATUS</div><div class="detail-field-val" id="d-status"></div></div>
+      <div><div class="detail-field-label">ASSIGNEE</div><div class="detail-field-val" id="d-assignee"></div></div>
+      <div><div class="detail-field-label">FRAMEWORK</div><div class="detail-field-val" id="d-framework"></div></div>
+      <div><div class="detail-field-label">CREATED</div><div class="detail-field-val" id="d-created"></div></div>
+    </div>
+    <div class="detail-desc" id="d-desc"></div>
+    <div class="activity-log"><div class="activity-title">ACTIVITY LOG</div><div id="d-activity"></div></div>
+    <div class="detail-actions">
+      <select class="form-select" id="d-status-change" style="flex:1" onchange="updateStatus()">
+        <option>Open</option><option>In Progress</option><option>In Review</option><option>Closed</option>
+      </select>
+      <button class="btn btn-danger" onclick="deleteTicket()">Delete</button>
+      <button class="btn btn-outline" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- VULN DETAIL -->
+<div class="detail-overlay" id="vuln-detail-overlay" onclick="closeVulnDetail(event)">
+  <div class="detail-panel">
+    <div class="detail-id" id="vd-cve"></div>
+    <div class="detail-title" id="vd-name"></div>
+    <div class="detail-meta">
+      <div><div class="detail-field-label">CVSS SCORE</div><div class="detail-field-val" id="vd-cvss"></div></div>
+      <div><div class="detail-field-label">SEVERITY</div><div class="detail-field-val" id="vd-severity"></div></div>
+      <div><div class="detail-field-label">STATUS</div><div class="detail-field-val" id="vd-status"></div></div>
+      <div><div class="detail-field-label">TOOL</div><div class="detail-field-val" id="vd-tool"></div></div>
+      <div><div class="detail-field-label">AFFECTED SYSTEM</div><div class="detail-field-val" id="vd-system"></div></div>
+      <div><div class="detail-field-label">DUE DATE</div><div class="detail-field-val" id="vd-due"></div></div>
+      <div><div class="detail-field-label">ASSIGNEE</div><div class="detail-field-val" id="vd-assignee"></div></div>
+      <div><div class="detail-field-label">DISCOVERED</div><div class="detail-field-val" id="vd-created"></div></div>
+    </div>
+    <div class="detail-desc" id="vd-desc"></div>
+    <div><div class="detail-field-label" style="margin-bottom:8px">REMEDIATION STEPS</div><div class="detail-desc" id="vd-remediation"></div></div>
+    <div class="activity-log"><div class="activity-title">ACTIVITY LOG</div><div id="vd-activity"></div></div>
+    <div class="detail-actions">
+      <select class="form-select" id="vd-status-change" style="flex:1" onchange="updateVulnStatus()">
+        <option>Open</option><option>In Progress</option><option>Patched</option><option>Accepted</option>
+      </select>
+      <button class="btn btn-danger" onclick="deleteVuln()">Delete</button>
+      <button class="btn btn-outline" onclick="closeVulnDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+<script>
+let tickets = [], vulns = [];
+let nextId = 1000, nextVid = 100;
+let currentView = 'all', currentChip = 'all';
+let currentVulnChip = 'all';
+let selectedTicketId = null, selectedVulnId = null;
+let activeModule = 'tickets';
+
+const SAMPLE_TICKETS = [
+  { title:"Annual ISO 27001 Compliance Audit Due", desc:"Annual internal audit due end of month. Evidence collection must begin immediately.", category:"GRC", priority:"Critical", status:"Open", assignee:"SashaKay Simpson", framework:"ISO 27001", activity:["Ticket created","Assigned to SashaKay Simpson"] },
+  { title:"Phishing Simulation – Q2 Report", desc:"Q2 phishing simulation results need review and management reporting per NIST CSF PR.AT.", category:"GRC", priority:"High", status:"In Progress", assignee:"James Okafor", framework:"NIST CSF 2.0", activity:["Ticket created","Status updated to In Progress"] },
+  { title:"Employee Laptops Missing Encryption", desc:"3 laptops flagged without full-disk encryption. Violates ISO 27001 A.8.5.", category:"IT", priority:"Critical", status:"Open", assignee:"Derek Williams", framework:"ISO 27001", activity:["Ticket created","Escalated to Critical"] },
+  { title:"Vendor Contract Renewal – CloudStore Inc.", desc:"Annual renewal requires legal review, updated DPA, and risk assessment.", category:"Vendor", priority:"High", status:"In Review", assignee:"SashaKay Simpson", framework:"GDPR", activity:["Ticket created","DPA draft received"] },
+  { title:"MFA Not Enforced on Admin Accounts", desc:"4 admin accounts without MFA per NIST CSF PR.AC-7.", category:"IT", priority:"Critical", status:"In Progress", assignee:"Derek Williams", framework:"NIST CSF 2.0", activity:["Ticket created","MFA rollout started"] },
+  { title:"GDPR Data Subject Access Request", desc:"DSAR received. Must respond within 30 days per GDPR Article 15.", category:"GRC", priority:"High", status:"In Progress", assignee:"Maria Chen", framework:"GDPR", activity:["Request received","Data mapping started"] },
+  { title:"Access Control Policy – Annual Review", desc:"Policy due for annual review. Requires CISO sign-off.", category:"GRC", priority:"Medium", status:"In Review", assignee:"SashaKay Simpson", framework:"ISO 27001", activity:["Draft v2.1 completed"] },
+  { title:"Vendor SLA Breach – DataPipe Analytics", desc:"Vendor missed 99.9% uptime SLA for 3 months. Formal notice required.", category:"Vendor", priority:"High", status:"Open", assignee:"SashaKay Simpson", framework:"", activity:["Ticket created","Escalated to management"] },
+  { title:"Risk Register Quarterly Update", desc:"Q2 update due. New risks: AI bias, third-party API dependency, insider threat.", category:"GRC", priority:"Medium", status:"Open", assignee:"SashaKay Simpson", framework:"NIST CSF 2.0", activity:["Ticket created"] },
+  { title:"SSL Certificate Expiring – Production Server", desc:"SSL cert for api.jamaicatech.io expires in 12 days.", category:"IT", priority:"High", status:"Open", assignee:"Derek Williams", framework:"", activity:["Ticket created","Renewal submitted"] },
+];
+
+const SAMPLE_VULNS = [
+  { cve:"CVE-2021-44228", name:"Log4Shell – Apache Log4j Remote Code Execution", system:"Java application servers (3 instances)", cvss:10.0, tool:"Tenable", status:"Patched", remediation:"Updated Log4j to version 2.17.1 on all affected servers. WAF rules applied as interim control.", desc:"Critical RCE vulnerability in Apache Log4j2 logging library. Allows unauthenticated remote code execution by exploiting JNDI lookup features. Actively exploited in the wild.", assignee:"Derek Williams", due:"2024-01-15", activity:["Discovered by Tenable scan","Escalated to Critical","Patch applied to all 3 servers","Verified patched — ticket closed"] },
+  { cve:"CVE-2023-44487", name:"HTTP/2 Rapid Reset – DDoS Vulnerability", system:"Production web server (Nginx)", cvss:7.5, tool:"Qualys", status:"Patched", remediation:"Updated Nginx to version 1.25.3. Configured HTTP/2 connection limits.", desc:"HTTP/2 protocol vulnerability allowing attackers to send a large number of RESET frames causing denial of service. Affects most web servers running HTTP/2.", assignee:"Derek Williams", due:"2024-02-01", activity:["Discovered via Qualys scan","Nginx updated","Verified resolved"] },
+  { cve:"CVE-2024-21762", name:"Fortinet FortiOS SSL VPN Out-of-Bounds Write", system:"VPN Gateway (FortiGate)", cvss:9.6, tool:"Tenable", status:"In Progress", remediation:"Apply FortiOS patch 7.4.3 or higher. Disable SSL VPN as temporary workaround if patch cannot be applied immediately.", desc:"Critical out-of-bounds write vulnerability in Fortinet FortiOS SSL VPN. Allows remote unauthenticated attacker to execute arbitrary code via specially crafted HTTP requests.", assignee:"Derek Williams", due:"2024-04-30", activity:["Discovered by Tenable","Escalated — VPN is business critical","Maintenance window scheduled"] },
+  { cve:"CVE-2023-20198", name:"Cisco IOS XE Web UI Privilege Escalation", system:"Network switches (2 devices)", cvss:10.0, tool:"Rapid7", status:"Open", remediation:"Disable the web UI feature or apply Cisco patch. Restrict management interface access to trusted IP ranges.", desc:"Zero-day vulnerability in Cisco IOS XE web management interface allowing unauthenticated attackers to create accounts with level 15 privileges.", assignee:"James Okafor", due:"2024-04-25", activity:["Discovered by Rapid7 InsightVM","Two switches confirmed affected","Awaiting change approval"] },
+  { cve:"CVE-2024-3400", name:"PAN-OS Command Injection – Palo Alto GlobalProtect", system:"Firewall (PAN-OS)", cvss:10.0, tool:"Tenable", status:"In Progress", remediation:"Apply PAN-OS hotfix 11.1.2-h3. Enable Threat Prevention subscription as temporary mitigation.", desc:"Command injection vulnerability in Palo Alto Networks PAN-OS GlobalProtect feature. Allows unauthenticated remote code execution with root privileges.", assignee:"Derek Williams", due:"2024-04-26", activity:["Emergency alert from Tenable","Escalated to Critical immediately","Threat Prevention enabled as interim control"] },
+  { cve:"CVE-2023-34362", name:"MOVEit Transfer SQL Injection", system:"File transfer server (MOVEit)", cvss:9.8, tool:"Qualys", status:"Patched", remediation:"Applied MOVEit patch released May 31, 2023. Conducted forensic review — no evidence of exploitation.", desc:"Critical SQL injection vulnerability in Progress MOVEit Transfer. Widely exploited by Cl0p ransomware group to exfiltrate data from thousands of organizations.", assignee:"SashaKay Simpson", due:"2023-06-05", activity:["Emergency scan triggered","SQL injection confirmed","Patch applied within 24 hours","Forensic review completed — clean"] },
+  { cve:"CVE-2022-30190", name:"Microsoft MSDT Follina Remote Code Execution", system:"Windows 10/11 endpoints (47 devices)", cvss:7.8, tool:"Rapid7", status:"Patched", remediation:"Applied Microsoft June 2022 Patch Tuesday update KB5014699. Disabled MSDT URL protocol as additional hardening.", desc:"Zero-day RCE vulnerability in Microsoft Windows Support Diagnostic Tool (MSDT) exploitable via malicious Office documents without macros enabled.", assignee:"Derek Williams", due:"2022-06-20", activity:["Identified via Rapid7 scan","All 47 endpoints patched","Hardening applied"] },
+  { cve:"CVE-2024-1709", name:"ConnectWise ScreenConnect Authentication Bypass", system:"Remote support tool (ScreenConnect)", cvss:10.0, tool:"Manual", status:"Open", remediation:"Update to ScreenConnect 23.9.8 or later. If update not possible, immediately disconnect from internet.", desc:"Critical authentication bypass in ConnectWise ScreenConnect allowing unauthenticated users to create admin accounts and gain full system access.", assignee:"SashaKay Simpson", due:"2024-04-28", activity:["Flagged during manual security review","Confirmed vulnerable version in use","Vendor notification sent"] },
+  { cve:"CVE-2023-4966", name:"Citrix Bleed – NetScaler Session Token Leak", system:"Citrix NetScaler ADC", cvss:9.4, tool:"Tenable", status:"In Progress", remediation:"Apply Citrix security bulletin CTX579459 patch. Invalidate all active sessions after patching.", desc:"Session token leakage vulnerability in Citrix NetScaler ADC and Gateway allowing attackers to bypass authentication and hijack user sessions without credentials.", assignee:"James Okafor", due:"2024-05-01", activity:["Discovered by Tenable","Session invalidation performed","Patch in change queue"] },
+  { cve:"CVE-2024-0204", name:"Fortra GoAnywhere MFT Authentication Bypass", system:"File transfer system (GoAnywhere)", cvss:9.8, tool:"Qualys", status:"Accepted", remediation:"Patched in GoAnywhere MFT 7.4.1. Risk accepted by CISO — system is on internal network only with no external exposure.", desc:"Authentication bypass in Fortra GoAnywhere MFT allowing creation of admin users via the admin portal. Similar attack vector to MOVEit.", assignee:"SashaKay Simpson", due:"2024-03-15", activity:["Discovered via Qualys","Risk assessment completed","CISO accepted risk — internal only system","Documented in risk register"] },
+];
+
+function init() {
+  SAMPLE_TICKETS.forEach(t => addTicket(t, false));
+  SAMPLE_VULNS.forEach(v => addVuln(v, false));
+  renderTable(); renderVulnTable();
+  updateStats(); updateVulnStats(); updateBadges();
+}
+
+function addTicket(data, refresh=true) {
+  const id = 'TKT-' + String(nextId++).padStart(4,'0');
+  const now = new Date();
+  tickets.unshift({ id, ...data, created: now,
+    activity: (data.activity||['Ticket created']).map((a,i,arr) => ({ text:a, time:new Date(now-(arr.length-i)*3600000*24) }))
+  });
+  if(refresh){renderTable();updateStats();updateBadges();}
+}
+
+function addVuln(data, refresh=true) {
+  const id = 'VLN-' + String(nextVid++).padStart(3,'0');
+  const now = new Date();
+  vulns.unshift({ id, ...data, created: now,
+    activity: (data.activity||['Vulnerability logged']).map((a,i,arr) => ({ text:a, time:new Date(now-(arr.length-i)*3600000*24) }))
+  });
+  if(refresh){renderVulnTable();updateVulnStats();updateBadges();}
+}
+
+function cvssClass(score) {
+  if(score>=9.0) return 'critical';
+  if(score>=7.0) return 'high';
+  if(score>=4.0) return 'medium';
+  return 'low';
+}
+function cvssLabel(score) {
+  if(score>=9.0) return 'Critical';
+  if(score>=7.0) return 'High';
+  if(score>=4.0) return 'Medium';
+  return 'Low';
+}
+function statusClass(s) {
+  if(s==='Open') return 'open';
+  if(s==='In Progress') return 'progress';
+  if(s==='In Review') return 'review';
+  if(s==='Patched') return 'patched';
+  if(s==='Accepted') return 'accepted';
+  return 'closed';
+}
+function formatDate(d) { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+
+function getFiltered() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const pf = document.getElementById('priority-filter').value;
+  const sf = document.getElementById('status-filter').value;
+  return tickets.filter(t => {
+    const mv = currentView==='all'||(currentView==='open'&&t.status==='Open')||(currentView==='progress'&&t.status==='In Progress');
+    const mc = currentChip==='all'||t.category===currentChip;
+    const ms = !search||t.title.toLowerCase().includes(search)||t.id.toLowerCase().includes(search);
+    return mv&&mc&&ms&&(!pf||t.priority===pf)&&(!sf||t.status===sf);
+  });
+}
+
+function getFilteredVulns() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const sf = document.getElementById('vstatus-filter').value;
+  const tf = document.getElementById('vtool-filter').value;
+  return vulns.filter(v => {
+    const mc = currentVulnChip==='all'||cvssLabel(v.cvss)===currentVulnChip;
+    const ms = !search||v.name.toLowerCase().includes(search)||v.cve.toLowerCase().includes(search);
+    return mc&&ms&&(!sf||v.status===sf)&&(!tf||v.tool===tf);
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('ticket-tbody');
+  const filtered = getFiltered();
+  document.getElementById('empty-tickets').style.display = filtered.length?'none':'block';
+  tbody.innerHTML = filtered.map(t => `
+    <tr onclick="openDetail('${t.id}')">
+      <td><span class="ticket-id">${t.id}</span></td>
+      <td><div class="ticket-title">${t.title}</div><div class="ticket-desc">${(t.desc||'').substring(0,70)}${(t.desc||'').length>70?'…':''}</div></td>
+      <td><span class="tag tag-${t.category.toLowerCase()}">${t.category}</span></td>
+      <td><span class="priority p-${t.priority.toLowerCase()}"><span class="priority-dot"></span>${t.priority}</span></td>
+      <td><span class="status-badge s-${statusClass(t.status)}">${t.status}</span></td>
+      <td style="font-size:13px;color:var(--muted)">${t.assignee}</td>
+      <td style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">${formatDate(t.created)}</td>
+    </tr>`).join('');
+}
+
+function renderVulnTable() {
+  const tbody = document.getElementById('vuln-tbody');
+  const filtered = getFilteredVulns();
+  document.getElementById('empty-vulns').style.display = filtered.length?'none':'block';
+  tbody.innerHTML = filtered.map(v => {
+    const sc = cvssClass(v.cvss); const sl = cvssLabel(v.cvss);
+    return `<tr onclick="openVulnDetail('${v.id}')">
+      <td><a class="cve-link" href="https://nvd.nist.gov/vuln/detail/${v.cve}" target="_blank" onclick="event.stopPropagation()">${v.cve}</a></td>
+      <td><div class="ticket-title">${v.name}</div></td>
+      <td style="font-size:12px;color:var(--muted)">${v.system}</td>
+      <td><span class="cvss-badge cvss-${sc}">${v.cvss.toFixed(1)}</span></td>
+      <td><span class="priority p-${sl.toLowerCase()}"><span class="priority-dot"></span>${sl}</span></td>
+      <td><span class="tool-badge">${v.tool}</span></td>
+      <td><span class="status-badge s-${statusClass(v.status)}">${v.status}</span></td>
+      <td style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">${v.due||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = tickets.length;
+  document.getElementById('stat-open-count').textContent = '↑ '+tickets.filter(t=>t.status==='Open').length+' open';
+  document.getElementById('stat-critical').textContent = tickets.filter(t=>t.priority==='Critical').length;
+  document.getElementById('stat-inprogress').textContent = tickets.filter(t=>t.status==='In Progress').length;
+  document.getElementById('stat-closed').textContent = tickets.filter(t=>t.status==='Closed').length;
+}
+
+function updateVulnStats() {
+  document.getElementById('vstat-total').textContent = vulns.length;
+  document.getElementById('vstat-critical').textContent = vulns.filter(v=>v.cvss>=9.0).length;
+  document.getElementById('vstat-high').textContent = vulns.filter(v=>v.cvss>=7.0&&v.cvss<9.0).length;
+  document.getElementById('vstat-patched').textContent = vulns.filter(v=>v.status==='Patched').length;
+}
+
+function updateBadges() {
+  document.getElementById('badge-all').textContent = tickets.length;
+  document.getElementById('badge-open').textContent = tickets.filter(t=>t.status==='Open').length;
+  document.getElementById('badge-progress').textContent = tickets.filter(t=>t.status==='In Progress').length;
+  document.getElementById('badge-vulns').textContent = vulns.length;
+  document.getElementById('badge-crit').textContent = vulns.filter(v=>v.cvss>=9.0&&v.status!=='Patched').length;
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active','active-vuln'));
+  document.getElementById('page-'+page).classList.add('active');
+  const tab = document.getElementById('tab-'+page);
+  tab.classList.add(page==='vulns'?'active-vuln':'active');
+  activeModule = page;
+  document.getElementById('new-btn').textContent = page==='vulns'?'+ Add CVE':'+ New Ticket';
+  document.getElementById('new-btn').className = 'btn '+(page==='vulns'?'btn-purple':'btn-primary');
+  document.getElementById('view-title').textContent = page==='vulns'?'Vulnerability Management':'All Tickets';
+}
+
+function switchModule(mod, el) {
+  switchPage(mod);
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active','active-vuln'));
+  el.classList.add('active');
+  setView('all');
+}
+
+function setView(v) { currentView=v; renderTable(); }
+function setCategory(cat) { currentChip=cat; switchPage('tickets'); renderTable(); }
+function setChip(chip) {
+  currentChip=chip;
+  document.querySelectorAll('.filter-chip[id^="chip-"]').forEach(el=>el.classList.remove('active'));
+  document.getElementById('chip-'+chip)?.classList.add('active');
+  renderTable();
+}
+function setVulnFilter(sev) { switchPage('vulns'); setVulnChip(sev); }
+function setVulnChip(chip) {
+  currentVulnChip=chip;
+  document.querySelectorAll('.filter-chip[id^="vchip-"]').forEach(el=>el.classList.remove('active-purple','active'));
+  const el = document.getElementById('vchip-'+chip);
+  if(el) el.classList.add('active-purple');
+  renderVulnTable();
+}
+function handleSearch() { renderTable(); renderVulnTable(); }
+
+function openNewTicket() {
+  if(activeModule==='vulns') { document.getElementById('new-vuln-modal').classList.add('open'); return; }
+  document.getElementById('new-modal').classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function createTicket() {
+  const title = document.getElementById('f-title').value.trim();
+  if(!title) return alert('Please enter a title.');
+  addTicket({ title, desc:document.getElementById('f-desc').value, category:document.getElementById('f-cat').value, priority:document.getElementById('f-priority').value, assignee:document.getElementById('f-assignee').value, framework:document.getElementById('f-framework').value, status:'Open' });
+  document.getElementById('f-title').value=''; document.getElementById('f-desc').value='';
+  closeModal('new-modal'); showToast('Ticket created','green');
+}
+
+function createVuln() {
+  const cve = document.getElementById('v-cve').value.trim();
+  const name = document.getElementById('v-name').value.trim();
+  if(!cve||!name) return alert('CVE ID and name are required.');
+  const cvss = parseFloat(document.getElementById('v-cvss').value)||5.0;
+  addVuln({ cve, name, cvss, system:document.getElementById('v-system').value, desc:document.getElementById('v-desc').value, tool:document.getElementById('v-tool').value, assignee:document.getElementById('v-assignee').value, remediation:document.getElementById('v-remediation').value, due:document.getElementById('v-due').value, status:'Open' });
+  document.getElementById('v-cve').value=''; document.getElementById('v-name').value='';
+  closeModal('new-vuln-modal'); showToast('Vulnerability added','purple');
+}
+
+function openDetail(id) {
+  const t = tickets.find(x=>x.id===id); if(!t) return;
+  selectedTicketId=id;
+  document.getElementById('d-id').textContent=t.id;
+  document.getElementById('d-title').textContent=t.title;
+  document.getElementById('d-cat').innerHTML=`<span class="tag tag-${t.category.toLowerCase()}">${t.category}</span>`;
+  document.getElementById('d-priority').innerHTML=`<span class="priority p-${t.priority.toLowerCase()}"><span class="priority-dot"></span>${t.priority}</span>`;
+  document.getElementById('d-status').innerHTML=`<span class="status-badge s-${statusClass(t.status)}">${t.status}</span>`;
+  document.getElementById('d-assignee').textContent=t.assignee;
+  document.getElementById('d-framework').textContent=t.framework||'—';
+  document.getElementById('d-created').textContent=formatDate(t.created);
+  document.getElementById('d-desc').textContent=t.desc||'No description.';
+  const sc = document.getElementById('d-status-change');
+  sc.innerHTML=['Open','In Progress','In Review','Closed'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('');
+  document.getElementById('d-activity').innerHTML=(t.activity||[]).map(a=>`<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text"><strong>${a.text}</strong></div><div class="activity-time">${formatDate(a.time)}</div></div></div>`).join('');
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function openVulnDetail(id) {
+  const v = vulns.find(x=>x.id===id); if(!v) return;
+  selectedVulnId=id;
+  const sc = cvssClass(v.cvss); const sl = cvssLabel(v.cvss);
+  document.getElementById('vd-cve').innerHTML=`<a class="cve-link" href="https://nvd.nist.gov/vuln/detail/${v.cve}" target="_blank">${v.cve} ↗</a>`;
+  document.getElementById('vd-name').textContent=v.name;
+  document.getElementById('vd-cvss').innerHTML=`<span class="cvss-badge cvss-${sc}">${v.cvss.toFixed(1)}</span>`;
+  document.getElementById('vd-severity').innerHTML=`<span class="priority p-${sl.toLowerCase()}"><span class="priority-dot"></span>${sl}</span>`;
+  document.getElementById('vd-status').innerHTML=`<span class="status-badge s-${statusClass(v.status)}">${v.status}</span>`;
+  document.getElementById('vd-tool').innerHTML=`<span class="tool-badge">${v.tool}</span>`;
+  document.getElementById('vd-system').textContent=v.system||'—';
+  document.getElementById('vd-due').textContent=v.due||'—';
+  document.getElementById('vd-assignee').textContent=v.assignee||'—';
+  document.getElementById('vd-created').textContent=formatDate(v.created);
+  document.getElementById('vd-desc').textContent=v.desc||'No description.';
+  document.getElementById('vd-remediation').textContent=v.remediation||'No remediation steps documented.';
+  const vsc = document.getElementById('vd-status-change');
+  vsc.innerHTML=['Open','In Progress','Patched','Accepted'].map(s=>`<option${s===v.status?' selected':''}>${s}</option>`).join('');
+  document.getElementById('vd-activity').innerHTML=(v.activity||[]).map(a=>`<div class="activity-item"><div class="activity-dot purple"></div><div><div class="activity-text"><strong>${a.text}</strong></div><div class="activity-time">${formatDate(a.time)}</div></div></div>`).join('');
+  document.getElementById('vuln-detail-overlay').classList.add('open');
+}
+
+function closeDetail(e) { if(!e||e.target===document.getElementById('detail-overlay')){ document.getElementById('detail-overlay').classList.remove('open'); selectedTicketId=null; } }
+function closeVulnDetail(e) { if(!e||e.target===document.getElementById('vuln-detail-overlay')){ document.getElementById('vuln-detail-overlay').classList.remove('open'); selectedVulnId=null; } }
+
+function updateStatus() {
+  if(!selectedTicketId) return;
+  const t=tickets.find(x=>x.id===selectedTicketId);
+  const ns=document.getElementById('d-status-change').value;
+  t.status=ns; t.activity.push({text:`Status changed to ${ns}`,time:new Date()});
+  renderTable(); updateStats(); updateBadges();
+  document.getElementById('d-status').innerHTML=`<span class="status-badge s-${statusClass(ns)}">${ns}</span>`;
+  showToast('Status updated to '+ns,'green');
+}
+
+function updateVulnStatus() {
+  if(!selectedVulnId) return;
+  const v=vulns.find(x=>x.id===selectedVulnId);
+  const ns=document.getElementById('vd-status-change').value;
+  v.status=ns; v.activity.push({text:`Status changed to ${ns}`,time:new Date()});
+  renderVulnTable(); updateVulnStats(); updateBadges();
+  document.getElementById('vd-status').innerHTML=`<span class="status-badge s-${statusClass(ns)}">${ns}</span>`;
+  showToast('CVE status updated to '+ns,'purple');
+}
+
+function deleteTicket() {
+  if(!selectedTicketId||!confirm('Delete this ticket?')) return;
+  tickets=tickets.filter(t=>t.id!==selectedTicketId);
+  document.getElementById('detail-overlay').classList.remove('open');
+  selectedTicketId=null; renderTable(); updateStats(); updateBadges();
+  showToast('Ticket deleted','green');
+}
+
+function deleteVuln() {
+  if(!selectedVulnId||!confirm('Delete this vulnerability?')) return;
+  vulns=vulns.filter(v=>v.id!==selectedVulnId);
+  document.getElementById('vuln-detail-overlay').classList.remove('open');
+  selectedVulnId=null; renderVulnTable(); updateVulnStats(); updateBadges();
+  showToast('Vulnerability removed','purple');
+}
+
+function exportCSV() {
+  if(activeModule==='vulns') {
+    const h=['ID','CVE','Name','System','CVSS','Severity','Tool','Status','Due Date'];
+    const rows=getFilteredVulns().map(v=>[v.id,v.cve,`"${v.name}"`,`"${v.system}"`,v.cvss,cvssLabel(v.cvss),v.tool,v.status,v.due||'']);
+    const csv=[h,...rows].map(r=>r.join(',')).join('\n');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download='TrustDesk_Vulnerabilities.csv'; a.click();
+    showToast('CVE report exported','purple'); return;
+  }
+  const h=['ID','Title','Category','Priority','Status','Assignee','Framework','Created'];
+  const rows=getFiltered().map(t=>[t.id,`"${t.title}"`,t.category,t.priority,t.status,t.assignee,t.framework,formatDate(t.created)]);
+  const csv=[h,...rows].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='TrustDesk_Tickets.csv'; a.click();
+  showToast('CSV exported','green');
+}
+
+function showToast(msg, type='green') {
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.className='toast show'+(type==='purple'?' purple-toast':'');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+init();
+</script>
+</body>
+</html>
