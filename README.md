@@ -1,3 +1,37 @@
-# TrustDesk-GRC-Suite-
-Enterprise GRC &amp; Support Dashboard featuring quantitative risk scoring (I×L), multi-framework mapping (ISO 27001/NIST/GDPR), and automated audit workflows.
-I developed TrustDesk v3.0, a Governance, Risk, and Compliance (GRC) application designed to automate the intake and prioritization of regulatory issues. The system features a quantitative risk matrix that calculates severity based on Impact and Likelihood, ensuring that high-risk items are addressed within strict SLA timeframes. I also implemented an 'Audit Mode' to simulate external verification processes, ensuring all closed tickets maintain a high standard of evidentiary integrity. This project demonstrates my ability to build secure, scalable tools for distributed international teams.
+Enterprise Risk Management & Vulnerability Tracking System
+Live Demo: https://sasimps.github.io/TrustDesk-GRC-Suite-/
+
+📌 Project Overview
+TrustDesk is a specialized Governance, Risk, and Compliance (GRC) dashboard designed to bridge the gap between technical vulnerability management and executive risk reporting. Developed as a portfolio piece to demonstrate mastery of GRC frameworks, this tool allows security teams to log incidents, track CVEs, and map them to international compliance standards.
+
+🚀 Key Features
+Dual-Module Interface: Seamlessly switch between GRC Ticketing and Vulnerability Management.
+
+CVE Tracker: Real-time tracking of vulnerabilities with automated CVSS 3.1 severity classification (Critical, High, Medium, Low).
+
+Framework Mapping: Capability to map every ticket to specific controls within NIST CSF 2.0, ISO 27001, SOC 2, and GDPR.
+
+Audit-Ready Logging: Detailed activity logs for every record to ensure data integrity and accountability.
+
+Data Portability: Built-in Export-to-CSV functionality for external reporting and audit evidence collection.
+
+🛠 Tech Stack
+Frontend: Vanilla JavaScript (ES6+), HTML5, CSS3.
+
+Typography: Syne & DM Sans via Google Fonts for a high-end enterprise aesthetic.
+
+State Management: LocalStorage-based persistence for client-side data retention.
+
+⚖️ Compliance Standards Supported
+This tool was built with the following frameworks in mind:
+
+NIST CSF 2.0: Focus on Identify, Protect, and Respond functions.
+
+ISO/IEC 27001: Specifically addressing Annex A controls for access control and vulnerability management.
+
+GDPR: Managing Data Subject Access Requests (DSAR) and Article 32 security requirements.
+
+👤 Author
+Sasha-Kay Simpson Executive Secretary | AI Developer | GRC Specialist
+
+Based in Saint Ann, Jamaica.
